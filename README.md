@@ -2,19 +2,11 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# Run and deploy your AI Studio app
+# DJ BPM Zone Calculator
 
-This contains everything you need to run your app locally.
+- Single-file usage: open `index.html` directly in your browser. No build, no deps.
+- The page includes all logic and styling (via Tailwind CDN) inline.
 
-View your app in AI Studio: https://ai.studio/apps/drive/1IFTN_SVQArW29cu0DLtLoRPyT7hParle
+If you prefer a local dev server, any static file server works (e.g., `npx serve .`) but it isn’t required.
 
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Original AI Studio app reference: https://ai.studio/apps/drive/1IFTN_SVQArW29cu0DLtLoRPyT7hParle
