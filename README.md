@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="BPM%20Zone.jpeg" alt="BPM Zone Calculator" width="600"/>
+</p>
+
 # DJ BPM Zone Calculator
 
 - Live demo: https://gmnstr.github.io/DJ-BPM-Zone-Calculator/
