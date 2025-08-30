@@ -8,7 +8,7 @@
 
 Overview
 - Minimal, single‑file calculator that helps DJs find optimal tempo‑matching zones based on groove analysis.
-- This is a static equation, but will include audio analysis and fuzzy limits in a future release. This is a first proof of concept.
+- This is a static equation, but will include audio analysis and fuzzy limits in a future release. Consider this a first proof of concept.
 - Everything is contained in `index.html` and styled via the Tailwind CDN.
 
 Features
