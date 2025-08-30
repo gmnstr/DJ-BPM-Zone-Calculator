@@ -1,0 +1,280 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DJ BPM Zone Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            teal: {
+              '950': '#042f2e'
+            }
+          }
+        }
+      }
+    }
+  </script>
+    <style>
+        /* For custom scrollbar styling to match the dark theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111827; /* bg-gray-900 */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563; /* bg-gray-600 */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280; /* bg-gray-500 */
+        }
+        body {
+             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        select {
+          -webkit-appearance: none;
+          -moz-appearance: none;
+          appearance: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-900">
+
+    <div class="min-h-screen bg-gradient-to-br from-slate-900 to-teal-950 text-slate-200 p-4 sm:p-6 lg:p-8">
+      <main class="max-w-7xl mx-auto bg-slate-900/60 backdrop-blur-sm rounded-2xl shadow-2xl border border-teal-800/50 overflow-hidden">
+        
+        <header class="bg-gradient-to-r from-slate-900 to-teal-950 text-white p-6 sm:p-8 text-center rounded-t-2xl">
+          <h1 class="text-3xl sm:text-4xl font-bold text-slate-100 drop-shadow-lg">DJ BPM Zone Calculator</h1>
+          <p class="mt-2 text-base sm:text-lg text-slate-300">Calculate optimal mixing zones based on harmonic analysis</p>
+        </header>
+
+        <section class="p-6 sm:p-8">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <div class="flex flex-col">
+              <label for="anchorBpm" class="mb-2 font-semibold text-slate-300 text-sm">Anchor BPM (A)</label>
+              <div class="relative">
+                <select id="anchorBpm" class="w-full px-4 py-3 bg-slate-800/50 border-2 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-teal-500 transition-colors duration-300 border-slate-700"></select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+                  <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex flex-col">
+              <label for="greenDev" class="mb-2 font-semibold text-slate-300 text-sm">Green Max Deviation (%)</label>
+              <div class="relative">
+                  <select id="greenDev" class="w-full px-4 py-3 bg-slate-800/50 border-2 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-teal-500 transition-colors duration-300 border-slate-700"></select>
+                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                  </div>
+              </div>
+            </div>
+
+            <div class="flex flex-col">
+              <label for="yellowDev" class="mb-2 font-semibold text-slate-300 text-sm">Yellow Max Deviation (%)</label>
+              <div class="relative">
+                  <select id="yellowDev" class="w-full px-4 py-3 bg-slate-800/50 border-2 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-teal-500 transition-colors duration-300 border-slate-700"></select>
+                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                  </div>
+              </div>
+            </div>
+            
+          </div>
+
+          <p id="error-message" class="mt-4 text-center text-red-400"></p>
+        </section>
+        
+        <section class="p-6 sm:p-8 pt-0" id="results" style="display: none;">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <!-- Green Zone Card -->
+              <div class="bg-slate-800/70 p-6 rounded-lg border-l-4 border-green-500 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                <h3 class="text-xl font-bold text-white mb-4">Green Zone (Optimal Mix)</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div class="text-center bg-slate-700/50 p-4 rounded-md">
+                    <div class="text-sm text-slate-400 mb-1">Upmix Range</div>
+                    <div id="green-up-range" class="text-2xl font-bold text-white">-</div>
+                  </div>
+                  <div class="text-center bg-slate-700/50 p-4 rounded-md">
+                    <div class="text-sm text-slate-400 mb-1">Downmix Range</div>
+                    <div id="green-down-range" class="text-2xl font-bold text-white">-</div>
+                  </div>
+                </div>
+              </div>
+              <!-- Yellow Zone Card -->
+              <div class="bg-slate-800/70 p-6 rounded-lg border-l-4 border-yellow-500 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                <h3 class="text-xl font-bold text-white mb-4">Yellow Zone (Caution Mix)</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div class="text-center bg-slate-700/50 p-4 rounded-md">
+                    <div class="text-sm text-slate-400 mb-1">Upmix Range</div>
+                    <div id="yellow-up-range" class="text-2xl font-bold text-white">-</div>
+                  </div>
+                  <div class="text-center bg-slate-700/50 p-4 rounded-md">
+                    <div class="text-sm text-slate-400 mb-1">Downmix Range</div>
+                    <div id="yellow-down-range" class="text-2xl font-bold text-white">-</div>
+                  </div>
+                </div>
+              </div>
+              <!-- Red Zone Card -->
+              <div class="bg-slate-800/70 p-6 rounded-lg border-l-4 border-red-500 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                <h3 class="text-xl font-bold text-white mb-4">Red Zone (Avoid Mix)</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div class="text-center bg-slate-700/50 p-4 rounded-md">
+                    <div class="text-sm text-slate-400 mb-1">Upmix Threshold</div>
+                    <div id="red-up-threshold" class="text-2xl font-bold text-white">-</div>
+                  </div>
+                  <div class="text-center bg-slate-700/50 p-4 rounded-md">
+                    <div class="text-sm text-slate-400 mb-1">Downmix Threshold</div>
+                    <div id="red-down-threshold" class="text-2xl font-bold text-white">-</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="bg-slate-800/70 rounded-lg overflow-hidden shadow-lg mt-8">
+              <div class="p-5 text-center">
+                <h3 class="text-xl font-bold text-slate-100">DJ Mixing Zone Breakdown</h3>
+                <p class="text-sm text-slate-400">Axis layout showing original BPM cut points</p>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full min-w-[600px] text-center">
+                  <thead class="bg-slate-800/50">
+                    <tr>
+                      <th class="p-4 font-semibold text-slate-300 tracking-wider">Mix Direction</th>
+                      <th class="p-4 font-semibold text-slate-300 tracking-wider">Anchor (A)</th>
+                      <th class="p-4 font-semibold text-green-400 tracking-wider">Green Boundary (±G)</th>
+                      <th class="p-4 font-semibold text-yellow-400 tracking-wider">Yellow Boundary (±Y)</th>
+                      <th class="p-4 font-semibold text-red-400 tracking-wider">Red Threshold</th>
+                    </tr>
+                  </thead>
+                  <tbody class="text-slate-200 text-sm">
+                    <tr class="border-t border-slate-700/50">
+                      <td class="p-4 font-semibold bg-slate-800/40">Upmix (O &lt; A)</td>
+                      <td class="p-4 font-semibold bg-slate-800/40" id="table-up-anchor">-</td>
+                      <td class="p-4 font-semibold bg-teal-900/50" id="table-up-green">-</td>
+                      <td class="p-4 font-semibold" style="background-color: #4a4128;" id="table-up-yellow">-</td>
+                      <td class="p-4 font-semibold" style="background-color: #4f2b2b;" id="table-up-red">-</td>
+                    </tr>
+                    <tr class="border-t border-slate-700/50">
+                      <td class="p-4 font-semibold bg-slate-800/40">Downmix (O &gt; A)</td>
+                      <td class="p-4 font-semibold bg-slate-800/40" id="table-down-anchor">-</td>
+                      <td class="p-4 font-semibold bg-teal-900/50" id="table-down-green">-</td>
+                      <td class="p-4 font-semibold" style="background-color: #4a4128;" id="table-down-yellow">-</td>
+                      <td class="p-4 font-semibold" style="background-color: #4f2b2b;" id="table-down-red">-</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+      </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- DOM Element References ---
+            const anchorBpmSelect = document.getElementById('anchorBpm');
+            const greenDevSelect = document.getElementById('greenDev');
+            const yellowDevSelect = document.getElementById('yellowDev');
+            const errorMessage = document.getElementById('error-message');
+            const resultsSection = document.getElementById('results');
+
+            // Zone Card Elements
+            const greenUpRangeEl = document.getElementById('green-up-range');
+            const greenDownRangeEl = document.getElementById('green-down-range');
+            const yellowUpRangeEl = document.getElementById('yellow-up-range');
+            const yellowDownRangeEl = document.getElementById('yellow-down-range');
+            const redUpThresholdEl = document.getElementById('red-up-threshold');
+            const redDownThresholdEl = document.getElementById('red-down-threshold');
+
+            // Table Elements
+            const tableUpAnchorEl = document.getElementById('table-up-anchor');
+            const tableUpGreenEl = document.getElementById('table-up-green');
+            const tableUpYellowEl = document.getElementById('table-up-yellow');
+            const tableUpRedEl = document.getElementById('table-up-red');
+            const tableDownAnchorEl = document.getElementById('table-down-anchor');
+            const tableDownGreenEl = document.getElementById('table-down-green');
+            const tableDownYellowEl = document.getElementById('table-down-yellow');
+            const tableDownRedEl = document.getElementById('table-down-red');
+
+            // --- Helper to populate select options ---
+            function populateSelect(selectEl, min, max, step, unit, defaultValue) {
+                selectEl.innerHTML = ''; // Clear existing options
+                for (let i = min; i <= max; i += step) {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = `${i}${unit}`;
+                    option.className = 'bg-slate-800';
+                    selectEl.appendChild(option);
+                }
+                selectEl.value = defaultValue;
+            }
+
+            // --- Populate Inputs ---
+            populateSelect(anchorBpmSelect, 60, 220, 1, ' BPM', 133);
+            populateSelect(greenDevSelect, 1, 20, 1, '%', 6);
+            populateSelect(yellowDevSelect, 1, 25, 1, '%', 8);
+
+            // --- Main Calculation and Rendering Logic ---
+            function calculateAndRender() {
+                const anchor = parseFloat(anchorBpmSelect.value);
+                const green = parseFloat(greenDevSelect.value);
+                const yellow = parseFloat(yellowDevSelect.value);
+
+                // Validation
+                if (green >= yellow) {
+                    errorMessage.textContent = 'Yellow deviation must be greater than green deviation.';
+                    resultsSection.style.display = 'none';
+                    return;
+                }
+                
+                errorMessage.textContent = '';
+
+                // Calculations
+                const greenUpBoundary = Math.round(anchor - (anchor * green / 100));
+                const greenDownBoundary = Math.round(anchor + (anchor * green / 100));
+                const yellowUpBoundary = Math.round(anchor - (anchor * yellow / 100));
+                const yellowDownBoundary = Math.round(anchor + (anchor * yellow / 100));
+                const redUpThreshold = yellowUpBoundary;
+                const redDownThreshold = yellowDownBoundary;
+
+                // Update Zone Cards
+                greenUpRangeEl.textContent = `${greenUpBoundary} BPM`;
+                greenDownRangeEl.textContent = `${greenDownBoundary} BPM`;
+                yellowUpRangeEl.textContent = `${yellowUpBoundary} BPM`;
+                yellowDownRangeEl.textContent = `${yellowDownBoundary} BPM`;
+                redUpThresholdEl.textContent = `< ${redUpThreshold} BPM`;
+                redDownThresholdEl.textContent = `> ${redDownThreshold} BPM`;
+                
+                // Update Table
+                tableUpAnchorEl.textContent = `${anchor} BPM`;
+                tableUpGreenEl.textContent = `${greenUpBoundary} BPM`;
+                tableUpYellowEl.textContent = `${yellowUpBoundary} BPM`;
+                tableUpRedEl.textContent = `< ${redUpThreshold} BPM`;
+                tableDownAnchorEl.textContent = `${anchor} BPM`;
+                tableDownGreenEl.textContent = `${greenDownBoundary} BPM`;
+                tableDownYellowEl.textContent = `${yellowDownBoundary} BPM`;
+                tableDownRedEl.textContent = `> ${redDownThreshold} BPM`;
+
+                resultsSection.style.display = 'block';
+            }
+
+            // --- Event Listeners ---
+            [anchorBpmSelect, greenDevSelect, yellowDevSelect].forEach(select => {
+                select.addEventListener('change', calculateAndRender);
+            });
+
+            // --- Initial Calculation ---
+            calculateAndRender();
+        });
+    </script>
+
+</body>
+</html>

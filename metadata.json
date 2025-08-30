@@ -1,0 +1,5 @@
+{
+  "name": "DJ BPM Zone Calculator",
+  "description": "A single-file HTML application to calculate optimal DJ mixing zones based on harmonic analysis.",
+  "requestFramePermissions": []
+}
