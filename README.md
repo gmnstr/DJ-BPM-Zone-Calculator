@@ -4,9 +4,12 @@
 
 # DJ BPM Zone Calculator
 
-- Single-file usage: open `index.html` directly in your browser. No build, no deps.
-- The page includes all logic and styling (via Tailwind CDN) inline.
+- Live demo: https://gmnstr.github.io/DJ-BPM-Zone-Calculator/
+- Download: https://github.com/gmnstr/DJ-BPM-Zone-Calculator/releases/tag/v1.0.0
+- Repo: https://github.com/gmnstr/DJ-BPM-Zone-Calculator
 
-If you prefer a local dev server, any static file server works (e.g., `npx serve .`) but it isn’t required.
+This is a minimal, single-file BPM zone calculator for DJs. All logic and UI live in `index.html` and are styled via the Tailwind CDN.
 
-Original AI Studio app reference: https://ai.studio/apps/drive/1IFTN_SVQArW29cu0DLtLoRPyT7hParle
+Usage
+- Open `index.html` directly in your browser (no build, no deps), or
+- Serve the folder with any static server (e.g., `npx serve .`).
