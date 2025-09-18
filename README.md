@@ -1,27 +1,56 @@
-<p align="center">
-  <img src="BPM%20Zone.jpeg" alt="BPM Zone Calculator" width="600"/>
-</p>
+# DJ BPM Zone Calculator
+
+> ⚠️ No tests were run (read-only QA review). Use the automated scripts below to validate changes locally.
+
+DJ BPM Zone Calculator is a lightweight web tool that helps DJs gauge which tracks will comfortably blend when pitching up or down from an anchor tempo. The experience is fully client-side and optimized for quick experimentation.
 
 - Live demo: https://gmnstr.github.io/DJ-BPM-Zone-Calculator/
 - Download: https://github.com/gmnstr/DJ-BPM-Zone-Calculator/releases/tag/v1.0.0
-- Repo: https://github.com/gmnstr/DJ-BPM-Zone-Calculator
+- Repository: https://github.com/gmnstr/DJ-BPM-Zone-Calculator
 
-Overview
-- Minimal, single‑file calculator that helps DJs find optimal tempo‑matching zones based on groove analysis.
-- This is a static equation, but will include audio analysis and fuzzy limits in a future release. Consider this a first proof of concept.
-- Everything is contained in `index.html` and styled via the Tailwind CDN.
+## Purpose
+The calculator visualizes safe, caution, and avoid zones for tempo mixing so DJs can plan transitions without memorizing formulas. Pick an anchor BPM, define the green (comfortable) and yellow (stretch) deviations, and the UI renders the recommended upmix/downmix windows.
 
-Features
-- Single file: just open and use — no build, no dependencies.
-- Adjustable anchor BPM (60–220 BPM).
-- Configurable green and yellow deviation percentages.
-- Clear outputs for Green (optimal), Yellow (caution), and Red (avoid) zones.
-- Responsive UI with dark theme.
+## Formula
+For each deviation percentage `d` and anchor tempo `A`, the boundaries are calculated as:
 
-Usage
-- Open `index.html` directly in your browser, or
-- Serve the folder with any static server (for example, `npx serve .`).
+```
+Upmix boundary  = round(A − (A × d / 100))
+Downmix boundary = round(A + (A × d / 100))
+```
 
-Deployment
-- GitHub Pages is configured to serve from `main` at `/docs`.
-- The hosted page mirrors `index.html` at `docs/index.html`.
+Green zones use the green deviation, yellow zones use the yellow deviation, and the red thresholds are aligned with the yellow boundaries.
+
+## Project structure
+```
+├── index.html          # Primary entry point used during development
+├── docs/               # GitHub Pages distribution (served from docs/)
+│   └── assets/         # Built JS modules copied from src/
+├── src/                # Source JavaScript modules
+└── tests/              # Node test runner suites for calculation logic
+```
+
+## Run locally
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Build the static assets for GitHub Pages:
+   ```bash
+   npm run build
+   ```
+3. Open `index.html` in your browser or serve the folder with a static server:
+   ```bash
+   npx serve .
+   ```
+
+## Scripts
+- `npm run lint` – Run ESLint with Prettier integration to ensure code style consistency.
+- `npm test` – Execute Node's built-in test runner covering BPM range calculations and input validation.
+- `npm run build` – Copy the latest source modules into `docs/assets/` for publishing.
+
+## Deployment
+The GitHub Pages site serves the contents of the `docs/` directory. Run `npm run build` before committing changes so the deployed copy matches the source.
+
+## Contributing
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for development workflow details, testing requirements, and screenshot expectations.
