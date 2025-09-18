@@ -14,6 +14,13 @@ import {
   validateInputs,
 } from './calculation.js';
 import { buildAxisRows, buildAxisCsv } from './ui-logic.js';
+import {
+  parsePlaylistInput,
+  scoreTracks,
+  createDefaultFilters,
+  filterPlaylistEntries,
+  buildPlaylistCsv,
+} from './playlist.js';
 
 const STEP_ONE = 1;
 const QUICK_ANCHORS = [128, 130, 133, 136, 140];
@@ -25,6 +32,12 @@ let currentAxisRows = [];
 let currentMixingZones = null;
 let feedbackTimeoutId = null;
 let presets = [];
+let playlistTracks = [];
+let playlistEntries = [];
+let playlistCounts = { total: 0, yes: 0, edge: 0, no: 0, invalid: 0 };
+let playlistFilters = createDefaultFilters();
+let playlistFeedbackTimeoutId = null;
+let currentSelection = null;
 
 const storageAvailable =
   typeof window !== 'undefined' &&
@@ -84,6 +97,17 @@ function getElements() {
     presetEmptyState: document.getElementById('preset-empty'),
     presetsUnavailable: document.getElementById('presets-unavailable'),
     resetButton: document.getElementById('reset-defaults'),
+    playlistInput: document.getElementById('playlist-input'),
+    playlistPreviewButton: document.getElementById('preview-playlist'),
+    playlistCopyButton: document.getElementById('copy-playlist-template'),
+    playlistDownloadButton: document.getElementById('download-playlist'),
+    playlistFeedback: document.getElementById('playlist-feedback'),
+    playlistSummary: document.getElementById('playlist-summary'),
+    playlistBody: document.getElementById('playlist-preview-body'),
+    playlistEmptyState: document.getElementById('playlist-empty-state'),
+    playlistExcluded: document.getElementById('playlist-excluded'),
+    playlistExcludedList: document.getElementById('playlist-excluded-list'),
+    playlistFilterContainer: document.getElementById('playlist-filter'),
   };
 }
 
@@ -296,6 +320,360 @@ function showFeedback(elements, message, tone = 'info') {
   feedbackTimeoutId = window.setTimeout(() => {
     clearFeedback(elements);
   }, FEEDBACK_CLEAR_DELAY);
+}
+
+function clearPlaylistFeedback(elements) {
+  if (!elements.playlistFeedback) {
+    return;
+  }
+  elements.playlistFeedback.textContent = '';
+  elements.playlistFeedback.classList.remove('text-teal-300', 'text-rose-300', 'text-slate-200');
+}
+
+function showPlaylistFeedback(elements, message, tone = 'info') {
+  if (!elements.playlistFeedback) {
+    return;
+  }
+
+  clearTimeout(playlistFeedbackTimeoutId);
+  clearPlaylistFeedback(elements);
+
+  const toneClass = tone === 'success' ? 'text-teal-300' : tone === 'error' ? 'text-rose-300' : 'text-slate-200';
+  elements.playlistFeedback.classList.add(toneClass);
+  elements.playlistFeedback.textContent = message;
+
+  playlistFeedbackTimeoutId = window.setTimeout(() => {
+    clearPlaylistFeedback(elements);
+  }, FEEDBACK_CLEAR_DELAY);
+}
+
+function setPlaylistEmptyState(elements, message) {
+  if (!elements.playlistEmptyState) {
+    return;
+  }
+  elements.playlistEmptyState.textContent = message;
+  elements.playlistEmptyState.classList.remove('hidden');
+}
+
+function hidePlaylistEmptyState(elements) {
+  if (!elements.playlistEmptyState) {
+    return;
+  }
+  elements.playlistEmptyState.classList.add('hidden');
+}
+
+function resetPlaylistCounts(total = 0) {
+  playlistCounts = { total, yes: 0, edge: 0, no: 0, invalid: 0 };
+}
+
+function getFilteredPlaylistEntries() {
+  if (!playlistEntries.length) {
+    return [];
+  }
+  const { included } = filterPlaylistEntries(playlistEntries, playlistFilters);
+  return included;
+}
+
+function renderPlaylistPreview(elements) {
+  if (!elements.playlistBody) {
+    return;
+  }
+
+  elements.playlistBody.innerHTML = '';
+
+  const hasTracks = playlistTracks.length > 0;
+  const hasScoredEntries = playlistEntries.length === playlistTracks.length && playlistEntries.length > 0;
+
+  if (!hasTracks) {
+    setPlaylistEmptyState(elements, 'Paste a playlist CSV to preview matches.');
+    if (elements.playlistSummary) {
+      elements.playlistSummary.textContent = 'No playlist loaded yet.';
+    }
+    if (elements.playlistCopyButton) {
+      elements.playlistCopyButton.disabled = true;
+    }
+    if (elements.playlistDownloadButton) {
+      elements.playlistDownloadButton.disabled = true;
+    }
+    if (elements.playlistExcluded) {
+      elements.playlistExcluded.classList.add('hidden');
+    }
+    return;
+  }
+
+  if (!hasScoredEntries) {
+    setPlaylistEmptyState(elements, 'Adjust anchor & deviations to score the pasted playlist.');
+    if (elements.playlistSummary) {
+      elements.playlistSummary.textContent = `${playlistTracks.length} tracks loaded. Waiting for valid settings.`;
+    }
+    if (elements.playlistCopyButton) {
+      elements.playlistCopyButton.disabled = true;
+    }
+    if (elements.playlistDownloadButton) {
+      elements.playlistDownloadButton.disabled = true;
+    }
+    if (elements.playlistExcluded) {
+      elements.playlistExcluded.classList.add('hidden');
+    }
+    return;
+  }
+
+  const { included, excluded } = filterPlaylistEntries(playlistEntries, playlistFilters);
+
+  if (!included.length) {
+    setPlaylistEmptyState(elements, 'No tracks match the current filters. Adjust filters to include more tracks.');
+    if (elements.playlistCopyButton) {
+      elements.playlistCopyButton.disabled = true;
+    }
+    if (elements.playlistDownloadButton) {
+      elements.playlistDownloadButton.disabled = true;
+    }
+  } else {
+    hidePlaylistEmptyState(elements);
+
+    const fragment = document.createDocumentFragment();
+
+    included.forEach((entry) => {
+      const row = document.createElement('tr');
+      row.className = 'hover:bg-slate-800/40 transition-colors';
+
+      const titleCell = document.createElement('td');
+      titleCell.className = 'px-4 py-3 font-medium text-slate-100';
+      titleCell.textContent = entry.title || '—';
+      row.appendChild(titleCell);
+
+      const artistCell = document.createElement('td');
+      artistCell.className = 'px-4 py-3 text-slate-300';
+      artistCell.textContent = entry.artist || '—';
+      row.appendChild(artistCell);
+
+      const bpmCell = document.createElement('td');
+      bpmCell.className = 'px-4 py-3 text-slate-200';
+      bpmCell.textContent = entry.bpmLabel;
+      row.appendChild(bpmCell);
+
+      const fitsCell = document.createElement('td');
+      fitsCell.className = 'px-4 py-3 font-semibold';
+      if (entry.status === 'yes') {
+        fitsCell.classList.add('text-green-300');
+      } else if (entry.status === 'edge') {
+        fitsCell.classList.add('text-amber-300');
+      } else if (entry.status === 'no') {
+        fitsCell.classList.add('text-rose-300');
+      } else {
+        fitsCell.classList.add('text-slate-300');
+      }
+      fitsCell.textContent = entry.fitsLabel;
+      row.appendChild(fitsCell);
+
+      const zoneCell = document.createElement('td');
+      zoneCell.className = 'px-4 py-3 text-slate-200';
+      zoneCell.textContent = entry.zoneLabel;
+      row.appendChild(zoneCell);
+
+      const deltaBpmCell = document.createElement('td');
+      deltaBpmCell.className = 'px-4 py-3 text-slate-200';
+      deltaBpmCell.textContent = entry.deltaBpmLabel;
+      row.appendChild(deltaBpmCell);
+
+      const deltaPercentCell = document.createElement('td');
+      deltaPercentCell.className = 'px-4 py-3 text-slate-200';
+      deltaPercentCell.textContent = entry.deltaPercentLabel;
+      row.appendChild(deltaPercentCell);
+
+      const notesCell = document.createElement('td');
+      notesCell.className = 'px-4 py-3 text-sm text-slate-300';
+      notesCell.textContent = entry.note;
+      row.appendChild(notesCell);
+
+      fragment.appendChild(row);
+    });
+
+    elements.playlistBody.appendChild(fragment);
+
+    if (elements.playlistCopyButton) {
+      elements.playlistCopyButton.disabled = false;
+    }
+    if (elements.playlistDownloadButton) {
+      elements.playlistDownloadButton.disabled = false;
+    }
+  }
+
+  if (elements.playlistSummary) {
+    const summaryParts = [
+      `${included.length} of ${playlistCounts.total} tracks included`,
+      `Fits: ${playlistCounts.yes}`,
+      `Edge: ${playlistCounts.edge}`,
+    ];
+    if (playlistFilters.no) {
+      summaryParts.push(`Outside: ${playlistCounts.no}`);
+    } else if (playlistCounts.no) {
+      summaryParts.push(`Outside excluded: ${playlistCounts.no}`);
+    }
+    if (playlistCounts.invalid) {
+      summaryParts.push(`Invalid BPM: ${playlistCounts.invalid}`);
+    }
+    elements.playlistSummary.textContent = summaryParts.join(' • ');
+  }
+
+  if (elements.playlistExcluded && elements.playlistExcludedList) {
+    elements.playlistExcludedList.innerHTML = '';
+    if (excluded.length) {
+      elements.playlistExcluded.classList.remove('hidden');
+      excluded.forEach((entry) => {
+        const item = document.createElement('li');
+        item.className = 'text-sm text-slate-300';
+        const title = entry.title || 'Untitled track';
+        const artist = entry.artist || 'Unknown artist';
+        const label = entry.status === 'invalid' ? 'Invalid BPM' : `Excluded (${entry.fitsLabel})`;
+        item.textContent = `${title} — ${artist} • ${label}${entry.note ? ` — ${entry.note}` : ''}`;
+        elements.playlistExcludedList.appendChild(item);
+      });
+    } else {
+      elements.playlistExcluded.classList.add('hidden');
+    }
+  }
+}
+
+function updatePlaylistScoring(elements) {
+  if (!playlistTracks.length) {
+    playlistEntries = [];
+    resetPlaylistCounts();
+    renderPlaylistPreview(elements);
+    return;
+  }
+
+  if (!currentMixingZones || !currentSelection) {
+    playlistEntries = [];
+    renderPlaylistPreview(elements);
+    return;
+  }
+
+  const { entries, counts } = scoreTracks(playlistTracks, {
+    anchor: currentMixingZones.anchor,
+    greenPct: currentSelection.greenPct,
+    yellowPct: currentSelection.yellowPct,
+    mixingZones: currentMixingZones,
+  });
+
+  playlistEntries = entries;
+  playlistCounts = counts;
+  renderPlaylistPreview(elements);
+}
+
+function handlePlaylistPreview(elements) {
+  if (!elements.playlistInput) {
+    return;
+  }
+
+  const raw = elements.playlistInput.value || '';
+
+  if (!raw.trim()) {
+    playlistTracks = [];
+    playlistEntries = [];
+    resetPlaylistCounts();
+    renderPlaylistPreview(elements);
+    showPlaylistFeedback(elements, 'Paste a CSV with Title, Artist, BPM columns first.', 'error');
+    return;
+  }
+
+  const result = parsePlaylistInput(raw);
+  if (result.errors.length) {
+    playlistTracks = [];
+    playlistEntries = [];
+    resetPlaylistCounts();
+    renderPlaylistPreview(elements);
+    showPlaylistFeedback(elements, result.errors[0], 'error');
+    return;
+  }
+
+  playlistTracks = result.tracks;
+  resetPlaylistCounts(playlistTracks.length);
+
+  if (!currentMixingZones || !currentSelection) {
+    playlistEntries = [];
+    renderPlaylistPreview(elements);
+    showPlaylistFeedback(
+      elements,
+      `Loaded ${playlistTracks.length} tracks. Adjust anchor & deviations to score them.`,
+      'info',
+    );
+    return;
+  }
+
+  updatePlaylistScoring(elements);
+  const included = getFilteredPlaylistEntries();
+  showPlaylistFeedback(
+    elements,
+    `${playlistTracks.length} tracks tagged. ${included.length} ready for export.`,
+    'success',
+  );
+}
+
+function handlePlaylistCopy(elements) {
+  if (!currentMixingZones || !playlistEntries.length) {
+    showPlaylistFeedback(elements, 'Preview the playlist before copying.', 'error');
+    return;
+  }
+
+  const included = getFilteredPlaylistEntries();
+  if (!included.length) {
+    showPlaylistFeedback(elements, 'No tracks match the current filters.', 'error');
+    return;
+  }
+
+  const csv = buildPlaylistCsv(included, currentMixingZones.anchor);
+  copyToClipboard(csv).then((success) => {
+    if (success) {
+      showPlaylistFeedback(elements, 'Playlist template copied to clipboard.', 'success');
+    } else {
+      showPlaylistFeedback(elements, 'Unable to copy playlist template.', 'error');
+    }
+  });
+}
+
+function handlePlaylistDownload(elements) {
+  if (!currentMixingZones || !playlistEntries.length) {
+    showPlaylistFeedback(elements, 'Preview the playlist before exporting.', 'error');
+    return;
+  }
+
+  const included = getFilteredPlaylistEntries();
+  if (!included.length) {
+    showPlaylistFeedback(elements, 'No tracks match the current filters.', 'error');
+    return;
+  }
+
+  const csv = buildPlaylistCsv(included, currentMixingZones.anchor);
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `dj-bpm-playlist-${currentMixingZones.anchor}bpm.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  showPlaylistFeedback(elements, 'Playlist CSV download started.', 'success');
+}
+
+function initPlaylistFilters(elements) {
+  if (!elements.playlistFilterContainer) {
+    return;
+  }
+
+  const checkboxes = elements.playlistFilterContainer.querySelectorAll('input[data-filter-status]');
+  checkboxes.forEach((checkbox) => {
+    const status = checkbox.dataset.filterStatus;
+    if (!status || !(status in playlistFilters)) {
+      return;
+    }
+    checkbox.checked = Boolean(playlistFilters[status]);
+    checkbox.addEventListener('change', () => {
+      playlistFilters[status] = checkbox.checked;
+      renderPlaylistPreview(elements);
+    });
+  });
 }
 
 async function copyToClipboard(text) {
@@ -746,21 +1124,26 @@ function init() {
       }
       currentAxisRows = [];
       currentMixingZones = null;
+      currentSelection = null;
       renderAxis([], elements);
+      updatePlaylistScoring(elements);
       return;
     }
 
     const results = calculateMixingZones(anchor, greenPct, yellowPct);
     currentMixingZones = results;
+    currentSelection = { anchor, greenPct, yellowPct };
     currentAxisRows = buildAxisRows(results);
     renderResultsCards(results, elements, { anchor, greenPct, yellowPct });
     renderAxis(currentAxisRows, elements);
     toggleResultsVisibility(elements, true);
     updateQuickAnchorSelection(anchor);
+    updatePlaylistScoring(elements);
   };
 
   initQuickAnchors(elements, handleChange);
   initPresetsSection(elements, handleChange);
+  initPlaylistFilters(elements);
 
   elements.anchorSelect.addEventListener('change', handleChange);
   elements.greenSelect.addEventListener('change', handleChange);
@@ -785,6 +1168,15 @@ function init() {
   }
   if (elements.downloadCsvButton) {
     elements.downloadCsvButton.addEventListener('click', () => handleDownloadCsv(elements));
+  }
+  if (elements.playlistPreviewButton) {
+    elements.playlistPreviewButton.addEventListener('click', () => handlePlaylistPreview(elements));
+  }
+  if (elements.playlistCopyButton) {
+    elements.playlistCopyButton.addEventListener('click', () => handlePlaylistCopy(elements));
+  }
+  if (elements.playlistDownloadButton) {
+    elements.playlistDownloadButton.addEventListener('click', () => handlePlaylistDownload(elements));
   }
 
   handleChange();
