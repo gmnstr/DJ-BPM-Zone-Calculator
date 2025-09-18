@@ -15,40 +15,60 @@ function isNumber(value) {
 }
 
 export function validateInputs(anchor, greenPct, yellowPct) {
-  if (!isNumber(anchor) || !isNumber(greenPct) || !isNumber(yellowPct)) {
-    return { valid: false, message: 'Anchor and deviation values must be numbers.' };
+  const errors = {};
+
+  if (!isNumber(anchor)) {
+    errors.anchor = 'Anchor BPM must be a number.';
+  } else if (!Number.isInteger(anchor)) {
+    errors.anchor = 'Anchor BPM must be a whole number.';
   }
 
-  if (anchor < ANCHOR_MIN || anchor > ANCHOR_MAX) {
-    return {
-      valid: false,
-      message: `Anchor BPM must be between ${ANCHOR_MIN} and ${ANCHOR_MAX}.`,
-    };
+  if (!isNumber(greenPct)) {
+    errors.green = 'Green deviation must be a number.';
+  } else if (!Number.isInteger(greenPct)) {
+    errors.green = 'Green deviation must be a whole number.';
   }
 
-  if (greenPct < GREEN_MIN || greenPct > GREEN_MAX) {
-    return {
-      valid: false,
-      message: `Green deviation must be between ${GREEN_MIN}% and ${GREEN_MAX}%.`,
-    };
+  if (!isNumber(yellowPct)) {
+    errors.yellow = 'Yellow deviation must be a number.';
+  } else if (!Number.isInteger(yellowPct)) {
+    errors.yellow = 'Yellow deviation must be a whole number.';
   }
 
-  if (yellowPct < YELLOW_MIN || yellowPct > YELLOW_MAX) {
-    return {
-      valid: false,
-      message: `Yellow deviation must be between ${YELLOW_MIN}% and ${YELLOW_MAX}%.`,
-    };
+  if (!errors.anchor) {
+    if (anchor < ANCHOR_MIN || anchor > ANCHOR_MAX) {
+      errors.anchor = `Anchor BPM must be between ${ANCHOR_MIN} and ${ANCHOR_MAX}.`;
+    }
   }
 
-  if (greenPct >= yellowPct) {
-    return { valid: false, message: 'Yellow deviation must be greater than green deviation.' };
+  if (!errors.green) {
+    if (greenPct < GREEN_MIN || greenPct > GREEN_MAX) {
+      errors.green = `Green deviation must be between ${GREEN_MIN}% and ${GREEN_MAX}%.`;
+    } else if (greenPct > PERCENTAGE_MAX) {
+      errors.green = 'Green deviation must be 100% or less.';
+    }
   }
 
-  if (greenPct > PERCENTAGE_MAX || yellowPct > PERCENTAGE_MAX) {
-    return { valid: false, message: 'Deviations must be 100% or less.' };
+  if (!errors.yellow) {
+    if (yellowPct < YELLOW_MIN || yellowPct > YELLOW_MAX) {
+      errors.yellow = `Yellow deviation must be between ${YELLOW_MIN}% and ${YELLOW_MAX}%.`;
+    } else if (yellowPct > PERCENTAGE_MAX) {
+      errors.yellow = 'Yellow deviation must be 100% or less.';
+    }
   }
 
-  return { valid: true };
+  if (!errors.green && !errors.yellow && greenPct >= yellowPct) {
+    errors.yellow = 'Yellow deviation must be greater than green deviation.';
+  }
+
+  const errorKeys = Object.keys(errors);
+
+  if (errorKeys.length > 0) {
+    const field = errorKeys[0];
+    return { valid: false, message: errors[field], field, errors };
+  }
+
+  return { valid: true, errors: {} };
 }
 
 function calculateDeviation(anchor, percentage) {
