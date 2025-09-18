@@ -216,6 +216,75 @@
               </div>
               <div id="axis-empty-state" class="border-t border-slate-700/60 p-5 text-sm text-slate-400">Adjust parameters to generate the axis ranges.</div>
             </div>
+            <div class="mt-10 space-y-6 rounded-xl border border-slate-700/60 bg-slate-800/70 p-6 shadow-lg">
+              <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div class="lg:max-w-xl">
+                  <h3 class="text-xl font-bold text-slate-100">Playlist workflow &amp; Rekordbox export</h3>
+                  <p class="mt-1 text-sm text-slate-400">Paste a CSV with Title, Artist, BPM to label tracks against this anchor and build a Rekordbox-friendly template.</p>
+                  <ul class="mt-3 list-disc space-y-1 pl-5 text-xs text-slate-500">
+                    <li>In Rekordbox, export a playlist to CSV to reuse the headers before pasting here.</li>
+                    <li>Use the filters to include only tracks you want in the static playlist.</li>
+                    <li>Import the downloaded CSV via <span class="font-semibold text-slate-300">File → Import Playlist</span>.</li>
+                  </ul>
+                </div>
+                <label class="flex w-full flex-col gap-2 text-sm text-slate-300 lg:w-1/2">
+                  <span class="font-medium">Paste playlist CSV</span>
+                  <textarea id="playlist-input" rows="8" placeholder="Title,Artist,BPM&#10;Track One,DJ Example,128" class="w-full rounded-md border border-slate-700/70 bg-slate-900/70 px-3 py-2 text-slate-100 placeholder:text-slate-500 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500"></textarea>
+                </label>
+              </div>
+              <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div class="flex flex-wrap items-center gap-3">
+                  <button id="preview-playlist" type="button" class="inline-flex items-center justify-center rounded-md border border-teal-500/60 bg-teal-700/80 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-teal-600/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900">Preview &amp; tag tracks</button>
+                  <button id="copy-playlist-template" type="button" class="inline-flex items-center justify-center rounded-md border border-slate-600/70 bg-slate-900/70 px-4 py-2 text-sm text-slate-200 transition-colors hover:bg-teal-700/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 disabled:cursor-not-allowed disabled:opacity-50" disabled>Copy playlist template</button>
+                  <button id="download-playlist" type="button" class="inline-flex items-center justify-center rounded-md border border-indigo-500/60 bg-indigo-700/80 px-4 py-2 text-sm text-white transition-colors hover:bg-indigo-600/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 disabled:cursor-not-allowed disabled:opacity-50" disabled>Make static playlist (CSV)</button>
+                </div>
+                <div id="playlist-filter" class="flex flex-wrap items-center gap-3 text-sm text-slate-300">
+                  <span class="font-medium">Include:</span>
+                  <label class="inline-flex items-center gap-2">
+                    <input type="checkbox" data-filter-status="yes" class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-teal-500 focus:ring-teal-400" checked />
+                    <span>Fits (Yes)</span>
+                  </label>
+                  <label class="inline-flex items-center gap-2">
+                    <input type="checkbox" data-filter-status="edge" class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-amber-400 focus:ring-amber-300" checked />
+                    <span>Edge (Caution)</span>
+                  </label>
+                  <label class="inline-flex items-center gap-2">
+                    <input type="checkbox" data-filter-status="no" class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-rose-400 focus:ring-rose-300" />
+                    <span>Outside (No)</span>
+                  </label>
+                </div>
+              </div>
+              <p id="playlist-feedback" class="min-h-[1.5rem] text-sm text-slate-200" aria-live="polite"></p>
+              <div class="space-y-4">
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <h4 class="text-lg font-semibold text-slate-100">Playlist preview</h4>
+                  <p id="playlist-summary" class="text-sm text-slate-400"></p>
+                </div>
+                <div class="overflow-x-auto rounded-lg border border-slate-700/60 bg-slate-900/70">
+                  <table class="w-full min-w-[920px] text-left text-sm text-slate-200">
+                    <thead class="bg-slate-900/70 text-xs uppercase tracking-wide text-slate-300">
+                      <tr>
+                        <th class="px-4 py-3">Title</th>
+                        <th class="px-4 py-3">Artist</th>
+                        <th class="px-4 py-3">BPM</th>
+                        <th class="px-4 py-3">Fits</th>
+                        <th class="px-4 py-3">Zone</th>
+                        <th class="px-4 py-3">Δ BPM</th>
+                        <th class="px-4 py-3">Δ %</th>
+                        <th class="px-4 py-3">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody id="playlist-preview-body" class="divide-y divide-slate-800/60"></tbody>
+                  </table>
+                  <div id="playlist-empty-state" class="px-4 py-5 text-sm text-slate-400">Paste a playlist to preview matches.</div>
+                </div>
+              </div>
+              <div id="playlist-excluded" class="hidden rounded-lg border border-slate-700/60 bg-slate-900/70 p-4">
+                <h4 class="text-sm font-semibold text-slate-200">Excluded from export</h4>
+                <p class="mt-1 text-xs text-slate-400">Tracks listed here are outside the window or missing BPM and will not appear in the exported CSV.</p>
+                <ul id="playlist-excluded-list" class="mt-3 space-y-2 text-sm text-slate-300"></ul>
+              </div>
+            </div>
           </section>
       </main>
     </div>

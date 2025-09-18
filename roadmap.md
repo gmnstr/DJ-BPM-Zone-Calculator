@@ -51,7 +51,8 @@ UX notes: Keep Axis numeric layout (monotonic left→right), percent display for
 
 ---
 
-## Phase 2 — Playlist workflow & Rekordbox friendliness *(MEDIUM)*
+## Phase 2 — Playlist workflow & Rekordbox friendliness *(MEDIUM)* ✅ Completed
+**Status:** ✅ Completed.
 **Goal:** Save DJs time when making playlists.
 
 **Tasks**
