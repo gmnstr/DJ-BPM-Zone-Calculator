@@ -48,7 +48,7 @@
 
     <div class="min-h-screen bg-gradient-to-br from-slate-900 to-teal-950 text-slate-200 p-4 sm:p-6 lg:p-8">
       <main class="max-w-7xl mx-auto bg-slate-900/60 backdrop-blur-sm rounded-2xl shadow-2xl border border-teal-800/50 overflow-hidden">
-        
+
         <header class="bg-gradient-to-r from-slate-900 to-teal-950 text-white p-6 sm:p-8 text-center rounded-t-2xl">
           <h1 class="text-3xl sm:text-4xl font-bold text-slate-100 drop-shadow-lg">DJ BPM Zone Calculator</h1>
           <p class="mt-2 text-base sm:text-lg text-slate-300">Calculate optimal mixing zones based on groove analysis</p>
@@ -61,122 +61,160 @@
 
         <section class="p-6 sm:p-8">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-            <div class="flex flex-col">
-              <label for="anchorBpm" class="mb-2 font-semibold text-slate-300 text-sm">Anchor BPM (A)</label>
+
+            <div class="flex flex-col gap-3">
+              <label for="anchorBpm" class="font-semibold text-slate-300 text-sm">Anchor BPM (A)</label>
               <div class="relative">
                 <select id="anchorBpm" class="w-full px-4 py-3 bg-slate-800/50 border-2 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-teal-500 transition-colors duration-300 border-slate-700"></select>
                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
                   <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
                 </div>
               </div>
+              <p id="anchor-error" class="text-xs text-rose-300 min-h-[1.25rem]" style="visibility: hidden;" aria-live="polite" aria-hidden="true"></p>
+              <div id="quick-anchors" class="flex flex-wrap gap-2" role="group" aria-label="Quick anchors"></div>
             </div>
 
-            <div class="flex flex-col">
-              <label for="greenDev" class="mb-2 font-semibold text-slate-300 text-sm">Green Max Deviation (%)</label>
+            <div class="flex flex-col gap-3">
+              <label for="greenDev" class="font-semibold text-slate-300 text-sm">Green Max Deviation (%)</label>
               <div class="relative">
                   <select id="greenDev" class="w-full px-4 py-3 bg-slate-800/50 border-2 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-teal-500 transition-colors duration-300 border-slate-700"></select>
                   <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
                     <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
                   </div>
               </div>
+              <p id="green-error" class="text-xs text-rose-300 min-h-[1.25rem]" style="visibility: hidden;" aria-live="polite" aria-hidden="true"></p>
             </div>
 
-            <div class="flex flex-col">
-              <label for="yellowDev" class="mb-2 font-semibold text-slate-300 text-sm">Yellow Max Deviation (%)</label>
+            <div class="flex flex-col gap-3">
+              <label for="yellowDev" class="font-semibold text-slate-300 text-sm">Yellow Max Deviation (%)</label>
               <div class="relative">
                   <select id="yellowDev" class="w-full px-4 py-3 bg-slate-800/50 border-2 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-teal-500 transition-colors duration-300 border-slate-700"></select>
                   <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
                     <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
                   </div>
               </div>
+              <p id="yellow-error" class="text-xs text-rose-300 min-h-[1.25rem]" style="visibility: hidden;" aria-live="polite" aria-hidden="true"></p>
             </div>
-            
+
           </div>
 
-          <p id="error-message" class="mt-4 text-center text-red-400"></p>
+          <div class="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex flex-col gap-1 text-sm text-slate-300 sm:flex-row sm:items-center sm:gap-2">
+              <span>Current anchor:</span>
+              <span id="current-anchor-label" class="text-lg font-semibold text-teal-300">—</span>
+            </div>
+            <button id="reset-defaults" type="button" class="inline-flex items-center gap-2 self-start rounded-md border border-slate-600/70 bg-slate-800/60 px-4 py-2 text-sm text-slate-200 transition-colors hover:bg-slate-700/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 sm:self-auto">
+              Reset to defaults
+            </button>
+          </div>
+
+          <p id="settings-summary" class="mt-3 text-center text-sm text-slate-400 sm:text-left"></p>
+          <p id="error-message" class="mt-4 text-center text-sm text-rose-300" aria-live="assertive"></p>
         </section>
-        
-        <section class="p-6 sm:p-8 pt-0" id="results" style="display: none;">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <!-- Green Zone Card -->
-              <div class="bg-slate-800/70 p-6 rounded-lg border-l-4 border-green-500 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                <h3 class="text-xl font-bold text-white mb-4">Green Zone (Optimal Mix)</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div class="text-center bg-slate-700/50 p-4 rounded-md">
-                    <div class="text-sm text-slate-400 mb-1">Upmix Range</div>
+
+        <section class="px-6 sm:px-8 pb-6">
+          <div class="space-y-4 rounded-xl border border-slate-700/60 bg-slate-900/60 p-5">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <h2 class="text-lg font-semibold text-slate-100">Presets</h2>
+                <p class="text-sm text-slate-400">Save and recall anchor & deviation combos for different sets.</p>
+              </div>
+              <div class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-end">
+                <label class="flex w-full flex-col gap-2 text-sm text-slate-300 sm:w-64">
+                  <span class="font-medium">Preset name</span>
+                  <input id="preset-name" type="text" placeholder="e.g., Warm-up set" class="w-full rounded-md border border-slate-700/70 bg-slate-800/70 px-3 py-2 text-slate-100 placeholder:text-slate-500 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+                </label>
+                <button id="save-preset" type="button" class="inline-flex items-center justify-center rounded-md border border-teal-500/60 bg-teal-700/80 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-teal-600/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900">
+                  Save preset
+                </button>
+              </div>
+            </div>
+            <p id="presets-unavailable" class="text-sm text-amber-300 hidden">Presets require browser storage, which is unavailable in this session.</p>
+            <ul id="preset-list" class="flex flex-col gap-3"></ul>
+            <p id="preset-empty" class="text-sm text-slate-400 italic">No presets saved yet.</p>
+          </div>
+        </section>
+
+        <section class="hidden p-6 sm:p-8 pt-0" id="results" aria-hidden="true">
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              <div class="rounded-lg border-l-4 border-green-500 bg-slate-800/70 p-6 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+                <h3 class="text-xl font-bold text-white">Green Zone (Optimal Mix)</h3>
+                <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div class="rounded-md bg-slate-700/50 p-4 text-center">
+                    <div class="text-sm text-slate-400">Upmix Range</div>
                     <div id="green-up-range" class="text-2xl font-bold text-white">-</div>
                   </div>
-                  <div class="text-center bg-slate-700/50 p-4 rounded-md">
-                    <div class="text-sm text-slate-400 mb-1">Downmix Range</div>
+                  <div class="rounded-md bg-slate-700/50 p-4 text-center">
+                    <div class="text-sm text-slate-400">Downmix Range</div>
                     <div id="green-down-range" class="text-2xl font-bold text-white">-</div>
                   </div>
                 </div>
               </div>
-              <!-- Yellow Zone Card -->
-              <div class="bg-slate-800/70 p-6 rounded-lg border-l-4 border-yellow-500 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                <h3 class="text-xl font-bold text-white mb-4">Yellow Zone (Caution Mix)</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div class="text-center bg-slate-700/50 p-4 rounded-md">
-                    <div class="text-sm text-slate-400 mb-1">Upmix Range</div>
+              <div class="rounded-lg border-l-4 border-yellow-500 bg-slate-800/70 p-6 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+                <h3 class="text-xl font-bold text-white">Yellow Zone (Caution Mix)</h3>
+                <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div class="rounded-md bg-slate-700/50 p-4 text-center">
+                    <div class="text-sm text-slate-400">Upmix Range</div>
                     <div id="yellow-up-range" class="text-2xl font-bold text-white">-</div>
                   </div>
-                  <div class="text-center bg-slate-700/50 p-4 rounded-md">
-                    <div class="text-sm text-slate-400 mb-1">Downmix Range</div>
+                  <div class="rounded-md bg-slate-700/50 p-4 text-center">
+                    <div class="text-sm text-slate-400">Downmix Range</div>
                     <div id="yellow-down-range" class="text-2xl font-bold text-white">-</div>
                   </div>
                 </div>
               </div>
-              <!-- Red Zone Card -->
-              <div class="bg-slate-800/70 p-6 rounded-lg border-l-4 border-red-500 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                <h3 class="text-xl font-bold text-white mb-4">Red Zone (Avoid Mix)</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div class="text-center bg-slate-700/50 p-4 rounded-md">
-                    <div class="text-sm text-slate-400 mb-1">Upmix Threshold</div>
+              <div class="rounded-lg border-l-4 border-red-500 bg-slate-800/70 p-6 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+                <h3 class="text-xl font-bold text-white">Red Zone (Avoid Mix)</h3>
+                <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div class="rounded-md bg-slate-700/50 p-4 text-center">
+                    <div class="text-sm text-slate-400">Upmix Threshold</div>
                     <div id="red-up-threshold" class="text-2xl font-bold text-white">-</div>
                   </div>
-                  <div class="text-center bg-slate-700/50 p-4 rounded-md">
-                    <div class="text-sm text-slate-400 mb-1">Downmix Threshold</div>
+                  <div class="rounded-md bg-slate-700/50 p-4 text-center">
+                    <div class="text-sm text-slate-400">Downmix Threshold</div>
                     <div id="red-down-threshold" class="text-2xl font-bold text-white">-</div>
                   </div>
                 </div>
               </div>
             </div>
-            
-            <div class="bg-slate-800/70 rounded-lg overflow-hidden shadow-lg mt-8">
-              <div class="p-5 text-center">
-                <h3 class="text-xl font-bold text-slate-100">DJ Mixing Zone Breakdown</h3>
-                <p class="text-sm text-slate-400">Axis layout showing original BPM cut points</p>
+
+            <div class="mt-8 overflow-hidden rounded-xl border border-slate-700/60 bg-slate-800/70 shadow-lg">
+              <div class="flex flex-col gap-4 border-b border-slate-700/60 p-5 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <h3 class="text-xl font-bold text-slate-100">Axis & Copy Actions</h3>
+                  <p class="text-sm text-slate-400">Monotonic ranges with copy buttons and Rekordbox CSV export.</p>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                  <button id="copy-axis-button" type="button" class="inline-flex items-center justify-center rounded-md border border-slate-600/70 bg-slate-900/70 px-4 py-2 text-sm text-slate-200 transition-colors hover:bg-teal-700/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 disabled:cursor-not-allowed disabled:opacity-50">
+                    Copy summary
+                  </button>
+                  <button id="copy-csv-button" type="button" class="inline-flex items-center justify-center rounded-md border border-slate-600/70 bg-slate-900/70 px-4 py-2 text-sm text-slate-200 transition-colors hover:bg-teal-700/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 disabled:cursor-not-allowed disabled:opacity-50">
+                    Copy Rekordbox CSV
+                  </button>
+                  <button id="download-csv-button" type="button" class="inline-flex items-center justify-center rounded-md border border-teal-500/60 bg-teal-700/80 px-4 py-2 text-sm text-white transition-colors hover:bg-teal-600/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 disabled:cursor-not-allowed disabled:opacity-50">
+                    Download CSV
+                  </button>
+                </div>
               </div>
-              <div class="overflow-x-auto">
-                <table class="w-full min-w-[600px] text-center">
-                  <thead class="bg-slate-800/50">
+              <div class="px-5 pt-4">
+                <p id="feedback-message" class="min-h-[1.5rem] text-sm text-teal-300" aria-live="polite"></p>
+              </div>
+              <div class="overflow-x-auto px-5 pb-5">
+                <table class="w-full min-w-[720px] text-left text-sm text-slate-200">
+                  <thead class="bg-slate-900/60 text-xs uppercase tracking-wide text-slate-300">
                     <tr>
-                      <th class="p-4 font-semibold text-slate-300 tracking-wider">Mix Direction</th>
-                      <th class="p-4 font-semibold text-slate-300 tracking-wider">Anchor (A)</th>
-                      <th class="p-4 font-semibold text-green-400 tracking-wider">Green Boundary (±G)</th>
-                      <th class="p-4 font-semibold text-yellow-400 tracking-wider">Yellow Boundary (±Y)</th>
-                      <th class="p-4 font-semibold text-red-400 tracking-wider">Red Threshold</th>
+                      <th class="px-4 py-3">Direction</th>
+                      <th class="px-4 py-3">Zone</th>
+                      <th class="px-4 py-3">Min BPM</th>
+                      <th class="px-4 py-3">Max BPM</th>
+                      <th class="px-4 py-3">Notes</th>
+                      <th class="px-4 py-3 text-center">Copy</th>
                     </tr>
                   </thead>
-                  <tbody class="text-slate-200 text-sm">
-                    <tr class="border-t border-slate-700/50">
-                      <td class="p-4 font-semibold bg-slate-800/40">Upmix (O &lt; A)</td>
-                      <td class="p-4 font-semibold bg-slate-800/40" id="table-up-anchor">-</td>
-                      <td class="p-4 font-semibold bg-teal-900/50" id="table-up-green">-</td>
-                      <td class="p-4 font-semibold" style="background-color: #4a4128;" id="table-up-yellow">-</td>
-                      <td class="p-4 font-semibold" style="background-color: #4f2b2b;" id="table-up-red">-</td>
-                    </tr>
-                    <tr class="border-t border-slate-700/50">
-                      <td class="p-4 font-semibold bg-slate-800/40">Downmix (O &gt; A)</td>
-                      <td class="p-4 font-semibold bg-slate-800/40" id="table-down-anchor">-</td>
-                      <td class="p-4 font-semibold bg-teal-900/50" id="table-down-green">-</td>
-                      <td class="p-4 font-semibold" style="background-color: #4a4128;" id="table-down-yellow">-</td>
-                      <td class="p-4 font-semibold" style="background-color: #4f2b2b;" id="table-down-red">-</td>
-                    </tr>
-                  </tbody>
+                  <tbody id="axis-body" class="divide-y divide-slate-800/60"></tbody>
                 </table>
               </div>
+              <div id="axis-empty-state" class="border-t border-slate-700/60 p-5 text-sm text-slate-400">Adjust parameters to generate the axis ranges.</div>
             </div>
           </section>
       </main>

@@ -14,7 +14,8 @@ A lightweight web app that maps an anchor BPM and deviation percentages to color
 
 ---
 
-## Phase 0 — Project hygiene *(SMALL)*
+## Phase 0 — Project hygiene *(SMALL)* ✅ Completed
+**Status:** ✅ Completed.
 **Goal:** Make the repo robust and safe to change.
 
 **Tasks**
@@ -30,7 +31,8 @@ A lightweight web app that maps an anchor BPM and deviation percentages to color
 
 ---
 
-## Phase 1 — Harden UX & deterministic features *(MEDIUM)*
+## Phase 1 — Harden UX & deterministic features *(MEDIUM)* ✅ Completed
+**Status:** ✅ Completed.
 **Goal:** Make the app delightful and copyable for DJs.
 
 **Tasks**
